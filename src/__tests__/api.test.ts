@@ -1,6 +1,8 @@
 const mockAnnounce = jest.fn();
 jest.mock('react-native', () => ({
-  AccessibilityInfo: { announceForAccessibility: (s: string) => mockAnnounce(s) },
+  AccessibilityInfo: {
+    announceForAccessibility: (s: string) => mockAnnounce(s),
+  },
 }));
 
 import { island, setGlobalConfig, resetIds } from '../api';
@@ -46,7 +48,9 @@ it('announces title, body and action label to screen readers', () => {
     body: 'Arrives Friday',
     action: { label: 'Undo', onPress: () => {} },
   });
-  expect(mockAnnounce).toHaveBeenCalledWith('Order shipped. Arrives Friday. Undo');
+  expect(mockAnnounce).toHaveBeenCalledWith(
+    'Order shipped. Arrives Friday. Undo'
+  );
 });
 
 it('uses the configured queue mode', () => {
