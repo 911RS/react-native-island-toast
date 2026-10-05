@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+
+- Reorganized README, link to the live demo
+
 ## 0.1.2
 
 - README links to the web version, react-island-toast
