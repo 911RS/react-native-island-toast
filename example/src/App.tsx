@@ -1,20 +1,5 @@
-import { Text, View, StyleSheet } from 'react-native';
-import { multiply } from 'react-native-island-toast';
-
-const result = multiply(3, 7);
+import { View } from 'react-native';
 
 export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Result: {result}</Text>
-    </View>
-  );
+  return <View style={{ flex: 1 }} />;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
