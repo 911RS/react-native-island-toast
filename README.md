@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/react-native-island-toast"><img src="https://img.shields.io/npm/v/react-native-island-toast?color=34C759&label=npm" alt="npm version" /></a>
-  <a href="https://bundlejs.com/?q=react-native-island-toast"><img src="https://img.shields.io/bundlejs/size/react-native-island-toast?color=34C759&label=gzip" alt="size" /></a>
+  <img src="https://img.shields.io/badge/gzip-%E2%89%88%206%20kB-34C759" alt="about 6 kB gzipped" />
   <img src="https://img.shields.io/badge/platforms-iOS%20%7C%20Android%20%7C%20Web-0A84FF" alt="platforms" />
   <img src="https://img.shields.io/badge/types-TypeScript-0A84FF" alt="TypeScript" />
   <a href="LICENSE"><img src="https://img.shields.io/npm/l/react-native-island-toast?color=8E8E93" alt="license" /></a>
@@ -30,14 +30,12 @@ One line, and a black island grows out of the top of the screen, pops a big icon
 
 ## Highlights
 
-|  |  |
-| --- | --- |
-| **Tiny** | About 6 kB gzipped. No dependencies besides Reanimated and safe-area-context. |
-| **Smooth** | Runs on the UI thread with Reanimated. Every open, morph and close is one continuous motion. |
-| **Yours** | Colors, sizes, corners, fonts, timings, curves, icons. Themes per type, light and dark. Slots for every part. |
-| **Smart queue** | A new message closes the current one smoothly, then opens. Or queue them all, or replace at once. |
-| **Real-world ready** | Promises, live updates, undo, stays above modals, swipe and tap to dismiss, top or bottom. |
-| **For everyone** | Screen reader announcements, reduced motion, RTL, a separate font for Arabic. |
+- **Tiny.** About 6 kB gzipped. No dependencies besides Reanimated and safe-area-context.
+- **Smooth.** Runs on the UI thread with Reanimated. Every open, morph and close is one continuous motion.
+- **Yours.** Colors, sizes, corners, fonts, timings, curves, icons. Themes per type, light and dark. Slots for every part.
+- **Smart queue.** A new message closes the current one smoothly, then opens. Or queue them all, or replace at once.
+- **Real-world ready.** Promises, live updates, undo, stays above modals, swipe and tap to dismiss, top or bottom.
+- **For everyone.** Screen reader announcements, reduced motion, RTL, a separate font for Arabic.
 
 ## Install
 
