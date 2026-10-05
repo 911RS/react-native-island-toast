@@ -108,7 +108,7 @@ export default function App() {
     <IslandProvider config={config}>
       <SafeAreaView style={s.page} edges={['top', 'left', 'right']}>
         {web && <StatusBar />}
-        <ScrollView contentContainerStyle={s.body}>
+        <ScrollView testID="content" contentContainerStyle={s.body}>
           <Text style={s.h1}>{tab}</Text>
           <Text style={s.sub}>{SUBTITLE[tab]}</Text>
           {screen}
