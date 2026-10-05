@@ -22,7 +22,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "build:ios": "xcodebuild ONLY_ACTIVE_ARCH=YES -workspace ios/IslandToastExample.xcworkspace -UseNewBuildSystem=YES -scheme IslandToastExample -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build -quiet",
+    "build:ios": "xcodebuild ONLY_ACTIVE_ARCH=YES -workspace ios/IslandToast.xcworkspace -UseNewBuildSystem=YES -scheme IslandToast -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build -quiet",
     "build:android": "cd android && ./gradlew assembleDebug -DtestBuildType=debug -Dorg.gradle.jvmargs=-Xmx4g",
     "build:web": "expo export --platform web"
   },
