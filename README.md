@@ -20,7 +20,7 @@
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/911RS/react-native-island-toast/main/media/hero.gif" alt="An island opens on a big tick, then turns into the message" width="480" />
+  <img src="https://raw.githubusercontent.com/911RS/react-native-island-toast/main/media/island.gif" alt="An island opens on a big tick, then turns into the message" width="480" />
   <br />
   <sub>The live demo runs the web version in your browser: same island, same API. <a href="https://github.com/911RS/react-native-island-toast/blob/main/media/demo.mp4">Watch the 1-minute tour on a phone</a>.</sub>
 </p>
