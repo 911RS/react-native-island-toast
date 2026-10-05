@@ -105,7 +105,12 @@ With an action, the message reads longer (3.5 s instead of 1.6 s).
 ```tsx
 const id = island.info('Looking for a driver', { duration: Infinity });
 // later
-island.update(id, { type: 'success', title: 'Driver found', body: 'Alex, 4 min away', duration: 2000 });
+island.update(id, {
+  type: 'success',
+  title: 'Driver found',
+  body: 'Alex, 4 min away',
+  duration: 2000,
+});
 ```
 
 ### Your own icons

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1
+
+- New README with a banner, a showcase and recipes
+
 ## 0.1.0
 
 First release.
