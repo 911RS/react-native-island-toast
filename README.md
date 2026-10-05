@@ -16,6 +16,10 @@
   <sub><a href="https://github.com/911RS/react-native-island-toast/blob/main/media/demo.mp4">▶ Watch the 1-minute tour</a></sub>
 </p>
 
+<p align="center">
+  <b>Building for the web?</b> The same island for React DOM: <a href="https://github.com/911RS/react-island-toast"><b>react-island-toast</b></a>
+</p>
+
 <br />
 
 ```tsx
@@ -302,6 +306,10 @@ yarn && yarn example web
 ```
 
 Every option in this README has a button there. `yarn example android` and `yarn example ios` work too.
+
+## Also for the web
+
+The same island, API and options for React DOM (Vite, Next.js, Remix): [react-island-toast](https://github.com/911RS/react-island-toast).
 
 ## License
 
