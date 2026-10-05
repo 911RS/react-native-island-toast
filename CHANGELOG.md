@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2
+
+- README links to the web version, react-island-toast
+
 ## 0.1.1
 
 - New README with a banner, a showcase and recipes
