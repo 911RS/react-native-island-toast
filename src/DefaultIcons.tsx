@@ -24,8 +24,8 @@ export function Tick({ size, color }: P) {
     >
       <View
         style={{
-          width: size * 0.52,
-          height: size * 0.28,
+          width: size * 0.62,
+          height: size * 0.34,
           borderLeftWidth: stroke,
           borderBottomWidth: stroke,
           borderColor: color,

@@ -1,10 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
-import {
-  StyleSheet,
-  useColorScheme,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { StyleSheet, useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { resolveMotion, resolveTheme } from './config';
 import { Island } from './Island';
@@ -20,8 +15,13 @@ const getLive = () => store.get();
 export function IslandHost() {
   const config = useIslandConfig();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  // The room the host really has (a Modal, a split screen or a framed preview can be narrower than the window).
+  const [width, setWidth] = useState<number | null>(null);
   const scheme = useColorScheme();
+  const dark =
+    config.colorScheme === 'auto'
+      ? scheme === 'dark'
+      : config.colorScheme === 'dark';
   const [hostId, setHostId] = useState<number | null>(null);
   const [isTop, setIsTop] = useState(false);
   const entry = useSyncExternalStore(store.subscribe, getLive, getLive);
@@ -38,35 +38,42 @@ export function IslandHost() {
     };
   }, []);
 
-  if (!entry || !isTop || hostId === null) return null;
-  const m = entry.message;
-  const dark =
-    config.colorScheme === 'auto'
-      ? scheme === 'dark'
-      : config.colorScheme === 'dark';
-  const theme = resolveTheme(config, m.type, dark, m.theme);
-  const motion = resolveMotion(config, {
-    ...m.motion,
-    ...(m.hero === undefined ? {} : { hero: m.hero }),
-  });
+  if (!isTop || hostId === null) return null;
   const edge = 6 + config.offset;
   const place =
     config.position === 'top'
       ? { top: insets.top + edge }
       : { bottom: insets.bottom + edge };
 
+  // Rendered even when idle, so its width is known before a message measures itself.
   return (
-    <View pointerEvents="box-none" style={[styles.host, place]}>
-      <Island
-        key={`${m.id}-${hostId}`}
-        entry={entry}
-        resume={entry.opened}
-        theme={theme}
-        motion={motion}
-        config={config}
-        windowWidth={width}
-        onGone={store.finish}
-      />
+    <View
+      pointerEvents="box-none"
+      style={[styles.host, place]}
+      onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
+    >
+      {entry && width !== null && (
+        <Island
+          key={`${entry.message.id}-${hostId}`}
+          entry={entry}
+          resume={entry.opened}
+          theme={resolveTheme(
+            config,
+            entry.message.type,
+            dark,
+            entry.message.theme
+          )}
+          motion={resolveMotion(config, {
+            ...entry.message.motion,
+            ...(entry.message.hero === undefined
+              ? {}
+              : { hero: entry.message.hero }),
+          })}
+          config={config}
+          hostWidth={width}
+          onGone={store.finish}
+        />
+      )}
     </View>
   );
 }

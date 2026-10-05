@@ -39,7 +39,8 @@ export interface IslandProps {
   theme: IslandTheme;
   motion: IslandMotion;
   config: IslandConfig;
-  windowWidth: number;
+  /** Width of the host; the island is capped to a share of it. */
+  hostWidth: number;
   onGone: (id: number) => void;
 }
 
@@ -67,7 +68,7 @@ export function Island({
   theme,
   motion,
   config,
-  windowWidth,
+  hostWidth,
   onGone,
 }: IslandProps) {
   const m = entry.message;
@@ -76,7 +77,7 @@ export function Island({
     motion.reducedMotion === 'always' ||
     (motion.reducedMotion === 'system' && systemReduced);
   const heroOn = motion.hero && !resume && !reduced;
-  const maxWidth = Math.min(windowWidth * theme.maxWidthRatio, theme.maxWidth);
+  const maxWidth = Math.min(hostWidth * theme.maxWidthRatio, theme.maxWidth);
   const top = config.position === 'top';
 
   // The message on screen; a new one (update) is measured first, then swapped in.
