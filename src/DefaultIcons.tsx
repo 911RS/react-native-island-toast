@@ -7,6 +7,7 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
+import { withAlpha } from './config';
 import type { IconSpec, IslandType } from './types';
 
 type P = { size: number; color: string };
@@ -107,7 +108,7 @@ export function Spinner({ size, color }: P) {
           margin: size * 0.1,
           borderRadius: size,
           borderWidth: stroke,
-          borderColor: `${color}33`,
+          borderColor: withAlpha(color, '33') ?? 'rgba(127,127,127,0.25)',
           borderTopColor: color,
         },
         style,

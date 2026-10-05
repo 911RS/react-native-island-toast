@@ -34,8 +34,21 @@ const lifeOf = (m: IslandMessage) =>
     })
   );
 
-const isKnown = (id: number) =>
-  store.get()?.message.id === id || store.waiting().some((m) => m.id === id);
+// Screen readers hear a message when it reaches the screen, and again when it changes there.
+let announced: IslandMessage | null = null;
+const announce = () => {
+  const e = store.get();
+  if (!e || !e.opened || e.closing || e.message === announced) return;
+  announced = e.message;
+  const m = e.message;
+  AccessibilityInfo.announceForAccessibility(
+    m.accessibilityLabel ??
+      [m.title, m.body, m.action?.label].filter(Boolean).join('. ')
+  );
+};
+const ensureAnnouncer = () => {
+  if (!store.isSubscribed(announce)) store.subscribe(announce);
+};
 
 const toInput = <A>(spec: PromiseMessage<A>, arg: A): ShowInput => {
   const v = typeof spec === 'function' ? spec(arg) : spec;
@@ -48,21 +61,26 @@ function show(input: ShowInput): number {
     config.haptics?.(m.type);
     config.sound?.(m.type);
   }
-  AccessibilityInfo.announceForAccessibility(
-    [m.title, m.body, m.action?.label].filter(Boolean).join('. ')
-  );
+  ensureAnnouncer();
   store.enqueue(m, config.queue, lifeOf(m));
   return m.id;
 }
 
-function update(id: number, patch: Partial<ShowInput>) {
+function update(id: number, patch: Partial<ShowInput>, replace = false) {
   const current =
     store.get()?.message.id === id
       ? store.get()!.message
       : store.waiting().find((m) => m.id === id);
   if (!current) return;
-  const next = { ...current, ...patch, id };
-  store.update(id, patch, 'duration' in patch ? lifeOf(next) : undefined);
+  const next = (
+    replace ? { ...patch, id } : { ...current, ...patch, id }
+  ) as IslandMessage;
+  store.update(
+    id,
+    next,
+    'duration' in patch || replace ? lifeOf(next) : undefined,
+    replace
+  );
 }
 
 export const island = {
@@ -91,14 +109,9 @@ export const island = {
       hero: false,
     });
     const settle = (input: ShowInput, type: IslandType) => {
-      if (!isKnown(id)) return;
-      const patch = {
-        hero: false,
-        ...input,
-        type: input.type ?? type,
-        duration: input.duration,
-      };
-      update(id, patch);
+      if (!store.isActive(id)) return;
+      // the result replaces the loading message (its body, icon or action do not carry over)
+      update(id, { hero: false, ...input, type: input.type ?? type }, true);
     };
     p.then(
       (v) => settle(toInput(msgs.success, v), 'success'),
@@ -107,7 +120,7 @@ export const island = {
     return p;
   },
 
-  update,
+  update: (id: number, patch: Partial<ShowInput>) => update(id, patch),
 
   dismiss(id: number | null | undefined) {
     if (id != null) store.requestClose(id);

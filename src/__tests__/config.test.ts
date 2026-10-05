@@ -2,6 +2,7 @@ import {
   DEFAULT_CONFIG,
   deepMerge,
   fontFor,
+  withAlpha,
   lifeMs,
   resolveMotion,
   resolveTheme,
@@ -146,5 +147,25 @@ describe('fontFor', () => {
     expect(
       fontFor('Saved', resolveTheme(DEFAULT_CONFIG, 'info', false), 'title')
     ).toBeUndefined();
+  });
+});
+
+describe('withAlpha', () => {
+  it('adds an alpha to #RRGGBB and #RGB colors', () => {
+    expect(withAlpha('#FF453A', '26')).toBe('#FF453A26');
+    expect(withAlpha('#fff', '26')).toBe('#ffffff26');
+  });
+  it('returns undefined for colors it cannot tint', () => {
+    expect(withAlpha('purple', '26')).toBeUndefined();
+    expect(withAlpha('#BF5AF2CC', '26')).toBeUndefined();
+    expect(withAlpha('rgb(1,2,3)', '26')).toBeUndefined();
+  });
+  it('gives a neutral disc for an accent it cannot tint', () => {
+    const t = resolveTheme(
+      { ...DEFAULT_CONFIG, theme: { accent: 'purple' } },
+      'info',
+      false
+    );
+    expect(t.iconDisc).toBe('rgba(255,255,255,0.12)');
   });
 });

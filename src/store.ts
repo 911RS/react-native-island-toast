@@ -6,6 +6,9 @@ export interface LiveEntry {
   until: number;
   /** Set once a host has opened it, so a host below does not replay the opening. */
   opened: boolean;
+  /** Set once its close has started; it is on its way out. */
+  closing: boolean;
+  life: number;
 }
 
 interface Waiting {
@@ -19,6 +22,7 @@ const CLOSE_FALLBACK_MS = 900;
 let live: LiveEntry | null = null;
 let waiting: Waiting[] = [];
 let expiry: ReturnType<typeof setTimeout> | undefined;
+const fallbacks = new Set<ReturnType<typeof setTimeout>>();
 const listeners = new Set<() => void>();
 const closers = new Set<(id: number) => void>();
 const hostListeners = new Set<() => void>();
@@ -37,7 +41,14 @@ function armExpiry(id: number, life: number) {
 }
 
 function show(w: Waiting) {
-  live = { message: w.message, until: Date.now() + w.life, opened: false };
+  // the countdown starts when a host opens it (markOpened)
+  live = {
+    message: w.message,
+    until: Infinity,
+    opened: false,
+    closing: false,
+    life: w.life,
+  };
   armExpiry(w.message.id, w.life);
   changed();
 }
@@ -64,9 +75,30 @@ export const store = {
       return;
     }
     if (live?.message.id !== id) return;
+    // never drawn yet: nothing to animate
+    if (!live.opened) {
+      store.finish(id);
+      return;
+    }
+    store.beginClose(id);
     closers.forEach((c) => c(id));
-    setTimeout(() => store.finish(id), CLOSE_FALLBACK_MS);
   },
+
+  /** Marks the live message as closing; it is let go after 900 ms if no island finishes it. */
+  beginClose(id: number) {
+    if (live?.message.id !== id || live.closing) return;
+    live = { ...live, closing: true };
+    const t = setTimeout(() => {
+      fallbacks.delete(t);
+      store.finish(id);
+    }, CLOSE_FALLBACK_MS);
+    fallbacks.add(t);
+  },
+
+  /** Showing or waiting, and not on its way out. */
+  isActive: (id: number): boolean =>
+    (live?.message.id === id && !live.closing) ||
+    waiting.some((w) => w.message.id === id),
 
   finish(id: number) {
     if (live?.message.id !== id) return;
@@ -77,11 +109,20 @@ export const store = {
     else changed();
   },
 
-  update(id: number, patch: Partial<IslandMessage>, life?: number) {
+  /** Merges the patch into the message, or replaces it whole when `replace` is set. */
+  update(
+    id: number,
+    patch: Partial<IslandMessage>,
+    life?: number,
+    replace = false
+  ) {
+    const next = (m: IslandMessage) =>
+      (replace ? { ...patch, id } : { ...m, ...patch, id }) as IslandMessage;
     if (live?.message.id === id) {
-      live = { ...live, message: { ...live.message, ...patch, id } };
+      live = { ...live, message: next(live.message) };
       if (life !== undefined) {
-        live.until = Date.now() + life;
+        live.life = life;
+        if (live.opened) live.until = Date.now() + life;
         armExpiry(id, life);
       }
       changed();
@@ -89,7 +130,7 @@ export const store = {
     }
     const w = waiting.find((x) => x.message.id === id);
     if (!w) return;
-    w.message = { ...w.message, ...patch, id };
+    w.message = next(w.message);
     if (life !== undefined) w.life = life;
   },
 
@@ -101,10 +142,14 @@ export const store = {
   get: (): LiveEntry | null => live,
   waiting: (): IslandMessage[] => waiting.map((w) => w.message),
 
-  /** Marks the live message as opened (its big-icon opening has played). */
+  /** A host has opened the live message: its countdown starts now (once). */
   markOpened(id: number) {
-    if (live?.message.id === id) live.opened = true;
+    if (live?.message.id !== id || live.opened) return;
+    live = { ...live, opened: true, until: Date.now() + live.life };
+    changed();
   },
+
+  isSubscribed: (l: () => void): boolean => listeners.has(l),
 
   subscribe(l: () => void) {
     listeners.add(l);
@@ -145,6 +190,8 @@ export const store = {
   /** Clears all state; for tests. */
   reset() {
     clearTimeout(expiry);
+    fallbacks.forEach(clearTimeout);
+    fallbacks.clear();
     live = null;
     waiting = [];
     listeners.clear();

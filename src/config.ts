@@ -90,6 +90,18 @@ export function deepMerge<T>(base: T, ...over: (Partial<T> | undefined)[]): T {
   return out as T;
 }
 
+const NEUTRAL_DISC = 'rgba(255,255,255,0.12)';
+
+/** Adds a hex alpha to a #RGB or #RRGGBB color; undefined for any other color format. */
+export function withAlpha(color: string, alpha: string): string | undefined {
+  if (/^#[0-9a-f]{6}$/i.test(color)) return color + alpha;
+  if (/^#[0-9a-f]{3}$/i.test(color)) {
+    const [r, g, b] = color.slice(1);
+    return `#${r}${r}${g}${g}${b}${b}${alpha}`;
+  }
+  return undefined;
+}
+
 const accentFor = (type: IslandType) =>
   TYPE_ACCENTS[type as keyof typeof TYPE_ACCENTS] ?? TYPE_ACCENTS.info;
 
@@ -116,7 +128,8 @@ export function resolveTheme(
   );
   const setsOwn = (key: keyof IslandTheme) =>
     layers.some((l) => l?.[key] !== undefined);
-  if (!setsOwn('iconDisc')) merged.iconDisc = `${merged.accent}26`;
+  if (!setsOwn('iconDisc'))
+    merged.iconDisc = withAlpha(merged.accent, '26') ?? NEUTRAL_DISC;
   if (!setsOwn('actionBackground')) merged.actionBackground = merged.accent;
   return merged;
 }

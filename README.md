@@ -29,7 +29,7 @@ Peer dependencies (most apps already have them):
 npm install react-native-reanimated react-native-safe-area-context
 ```
 
-Reanimated needs its Babel plugin; Expo sets it up for you.
+Reanimated needs its Babel plugin; Expo sets it up for you. A `SafeAreaProvider` is used when there is one (to keep the island under the notch), but it is not required.
 
 ## Quick start
 
@@ -90,7 +90,7 @@ island.promise(upload(file), {
 });
 ```
 
-The returned promise is the one you passed, so `await` and `.catch` work as usual. If the message was dismissed before the promise settles, nothing new appears.
+The returned promise is the one you passed, so `await` and `.catch` work as usual. The result replaces the loading message (its body, icon and action do not carry over). If the message was dismissed before the promise settles, nothing new appears.
 
 ### Undo
 
@@ -139,6 +139,7 @@ Settings are applied in this order, each one over the previous:
 | `tapToDismiss` | `boolean` | `true` |
 | `swipeToDismiss` | `boolean`, toward the edge | `true` |
 | `direction` | `'ltr'` or `'rtl'`; follows `I18nManager` when unset | unset |
+| `accessibilityHint` | screen reader hint for tapping the island | `'Dismiss'` |
 | `colorScheme` | `'auto'`, `'light'` or `'dark'` | `'auto'` |
 | `haptics`, `sound` | `(type) => void` | none |
 | `onShow`, `onHide` | `(message) => void` | none |
@@ -150,7 +151,7 @@ Settings are applied in this order, each one over the previous:
 | `background` | `#0A0A0A` |
 | `border` | `rgba(255,255,255,0.10)` (`0.20` in dark mode) |
 | `title`, `body` | `#FFFFFF`, `rgba(255,255,255,0.72)` |
-| `accent` | success `#34C759`, error `#FF453A`, info `#0A84FF`, loading `#FFFFFF` |
+| `accent` | success `#34C759`, error `#FF453A`, info `#0A84FF`, loading `#FFFFFF` (any color; the icon disc is tinted from `#RGB` or `#RRGGBB` accents, other formats get a neutral disc unless you set `iconDisc`) |
 | `iconDisc`, `actionBackground`, `actionText` | from the accent, `#0A0A0A` |
 | `pillWidth`, `pillHeight` | `120`, `36` (the resting size it opens from and closes to) |
 | `heroSize`, `heroIconSize`, `iconSize` | `116`, `64`, `20` |
@@ -209,7 +210,7 @@ island.show({
 });
 ```
 
-Set a slot in `config` to change it for every message.
+Slots render as components, so they can use hooks. Set a slot in `config` to change it for every message.
 
 ## Icons
 
@@ -240,8 +241,8 @@ Only the newest mounted host draws the island, so it always stays on top. When t
 
 ## Accessibility
 
-- Every message is announced to screen readers (title, body and action).
-- The island is one button that closes it; the action has its own label.
+- A message is announced to screen readers when it reaches the screen (title, body and action, or its `accessibilityLabel`), and again when it changes, so a promise's result is heard too.
+- The island is one button that closes it. Its action is offered as a screen reader action (and the iOS magic tap), with the action's label.
 - With reduced motion on, the island fades in and out with no big icon.
 
 ## Example app

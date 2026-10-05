@@ -23,6 +23,7 @@ describe('replace-latest', () => {
     store.onCloseRequest(closes);
     const [a, b, c] = [msg(), msg(), msg()];
     store.enqueue(a, 'replace-latest', LIFE);
+    store.markOpened(a.id);
     store.enqueue(b, 'replace-latest', LIFE);
     store.enqueue(c, 'replace-latest', LIFE);
     expect(liveId()).toBe(a.id);
@@ -84,6 +85,7 @@ it('moves on after 900 ms when nothing answers a close request', () => {
   const [a, b] = [msg(), msg()];
   store.registerHost();
   store.enqueue(a, 'queue-all', LIFE);
+  store.markOpened(a.id);
   store.enqueue(b, 'queue-all', LIFE);
   store.requestClose(a.id);
   jest.advanceTimersByTime(899);
@@ -118,6 +120,7 @@ it('updates the live message and moves its end', () => {
   const listener = jest.fn();
   const a = msg();
   store.enqueue(a, 'replace-latest', LIFE);
+  store.markOpened(a.id);
   store.subscribe(listener);
   store.update(a.id, { title: 'Uploaded' }, 5000);
   expect(store.get()?.message.title).toBe('Uploaded');
@@ -138,6 +141,7 @@ it('dismissAll closes the live one and clears the waiting', () => {
   store.onCloseRequest(closes);
   const [a, b] = [msg(), msg()];
   store.enqueue(a, 'queue-all', LIFE);
+  store.markOpened(a.id);
   store.enqueue(b, 'queue-all', LIFE);
   store.dismissAll();
   expect(store.waiting()).toEqual([]);
@@ -154,5 +158,66 @@ describe('hosts', () => {
     h2.unregister();
     expect(store.topHost()).toBe(h1.id);
     expect(changed).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('review fixes', () => {
+  it('drops at once a message asked to close before any host opened it', () => {
+    store.registerHost();
+    const [a, b] = [msg(), msg()];
+    store.enqueue(a, 'replace-latest', LIFE);
+    store.enqueue(b, 'replace-latest', LIFE);
+    expect(liveId()).toBe(b.id);
+  });
+
+  it('marks a closing message and moves on after 900 ms even when the island closed itself', () => {
+    store.registerHost();
+    const [a, b] = [msg(), msg()];
+    store.enqueue(a, 'queue-all', LIFE);
+    store.markOpened(a.id);
+    store.enqueue(b, 'queue-all', LIFE);
+    store.beginClose(a.id);
+    expect(store.get()?.closing).toBe(true);
+    jest.advanceTimersByTime(900);
+    expect(liveId()).toBe(b.id);
+  });
+
+  it('starts the countdown when a host opens the message, not when it was sent', () => {
+    jest.setSystemTime(0);
+    const a = msg();
+    store.enqueue(a, 'replace-latest', LIFE);
+    expect(store.get()?.until).toBe(Infinity);
+    jest.setSystemTime(1500);
+    store.registerHost();
+    store.markOpened(a.id);
+    expect(store.get()?.until).toBe(1500 + LIFE);
+    jest.setSystemTime(2000);
+    store.markOpened(a.id);
+    expect(store.get()?.until).toBe(1500 + LIFE);
+  });
+
+  it('counts a closing message as gone for isActive', () => {
+    store.registerHost();
+    const a = msg();
+    store.enqueue(a, 'replace-latest', LIFE);
+    store.markOpened(a.id);
+    expect(store.isActive(a.id)).toBe(true);
+    store.requestClose(a.id);
+    expect(store.isActive(a.id)).toBe(false);
+  });
+
+  it('replaces the whole message when asked', () => {
+    const a: IslandMessage = {
+      ...msg(),
+      body: 'old body',
+      action: { label: 'Cancel', onPress: () => {} },
+    };
+    store.enqueue(a, 'replace-latest', LIFE);
+    store.update(a.id, { type: 'success', title: 'Done' }, LIFE, true);
+    expect(store.get()?.message).toEqual({
+      id: a.id,
+      type: 'success',
+      title: 'Done',
+    });
   });
 });

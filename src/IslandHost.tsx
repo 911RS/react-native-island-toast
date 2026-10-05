@@ -1,6 +1,9 @@
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useContext, useEffect, useState, useSyncExternalStore } from 'react';
 import { StyleSheet, useColorScheme, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  initialWindowMetrics,
+  SafeAreaInsetsContext,
+} from 'react-native-safe-area-context';
 import { resolveMotion, resolveTheme } from './config';
 import { Island } from './Island';
 import { useIslandConfig } from './IslandProvider';
@@ -14,7 +17,9 @@ const getLive = () => store.get();
  */
 export function IslandHost() {
   const config = useIslandConfig();
-  const insets = useSafeAreaInsets();
+  // works without a SafeAreaProvider too (then the first known window insets, else none)
+  const insets = useContext(SafeAreaInsetsContext) ??
+    initialWindowMetrics?.insets ?? { top: 0, bottom: 0, left: 0, right: 0 };
   // The room the host really has (a Modal, a split screen or a framed preview can be narrower than the window).
   const [width, setWidth] = useState<number | null>(null);
   const scheme = useColorScheme();

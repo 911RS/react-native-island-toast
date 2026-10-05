@@ -44,10 +44,11 @@ it('calls the haptics and sound hooks with the type, unless haptic is false', ()
 });
 
 it('announces title, body and action label to screen readers', () => {
-  island.success('Order shipped', {
+  const id = island.success('Order shipped', {
     body: 'Arrives Friday',
     action: { label: 'Undo', onPress: () => {} },
   });
+  store.markOpened(id);
   expect(mockAnnounce).toHaveBeenCalledWith(
     'Order shipped. Arrives Friday. Undo'
   );
@@ -71,6 +72,7 @@ describe('promise', () => {
     });
     expect(live()?.type).toBe('loading');
     expect(live()?.duration).toBe(Infinity);
+    store.markOpened(live()!.id);
     resolve('photo.jpg');
     await expect(out).resolves.toBe('photo.jpg');
     expect(live()?.type).toBe('success');
@@ -127,6 +129,61 @@ it('dismissAll asks the live message to close', () => {
   const closes = jest.fn();
   store.onCloseRequest(closes);
   const id = island.info('A');
+  store.markOpened(id);
   island.dismissAll();
   expect(closes).toHaveBeenCalledWith(id);
+});
+
+describe('review fixes', () => {
+  it('announces only the message that reaches the screen', () => {
+    island.info('Order 1 shipped');
+    const b = island.info('Order 2 shipped');
+    store.markOpened(b);
+    expect(mockAnnounce.mock.calls.map((c) => c[0])).toEqual([
+      'Order 2 shipped',
+    ]);
+  });
+
+  it('announces a change to a message on screen', () => {
+    const id = island.info('Uploading');
+    store.markOpened(id);
+    island.update(id, { title: 'Uploaded', type: 'success' });
+    expect(mockAnnounce).toHaveBeenLastCalledWith('Uploaded');
+  });
+
+  it('announces the accessibilityLabel when one is given', () => {
+    const id = island.info('3', { accessibilityLabel: 'Three new messages' });
+    store.markOpened(id);
+    expect(mockAnnounce).toHaveBeenLastCalledWith('Three new messages');
+  });
+
+  it('replaces the loading message with the result instead of merging', async () => {
+    const out = island.promise(Promise.resolve('ok'), {
+      loading: {
+        title: 'Uploading',
+        body: 'video.mp4',
+        action: { label: 'Cancel', onPress: () => {} },
+      },
+      success: 'Done',
+      error: 'Failed',
+    });
+    await out;
+    expect(live()?.title).toBe('Done');
+    expect(live()?.body).toBeUndefined();
+    expect(live()?.action).toBeUndefined();
+    expect(live()?.type).toBe('success');
+  });
+
+  it('does not update a message that is already closing', async () => {
+    let resolve!: (v: string) => void;
+    const p = new Promise<string>((r) => (resolve = r));
+    island.promise(p, { loading: 'Saving', success: 'Saved', error: 'Failed' });
+    const id = live()!.id;
+    store.markOpened(id);
+    island.dismiss(id);
+    resolve('x');
+    await p;
+    await Promise.resolve();
+    expect(live()?.title).toBe('Saving');
+  });
 });

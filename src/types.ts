@@ -98,6 +98,8 @@ export interface IslandConfig extends IslandSlots {
   tapToDismiss: boolean;
   swipeToDismiss: boolean;
   direction?: 'ltr' | 'rtl';
+  /** Screen reader hint for tapping the island. Default: 'Dismiss'. */
+  accessibilityHint?: string;
   haptics?: (type: IslandType) => void;
   sound?: (type: IslandType) => void;
   onShow?: (m: IslandMessage) => void;

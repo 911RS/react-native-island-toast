@@ -107,7 +107,7 @@ export function Island({
 
   const onMeasure = (e: LayoutChangeEvent) => {
     const size = {
-      w: Math.ceil(e.nativeEvent.layout.width) + 1,
+      w: Math.min(maxWidth, Math.ceil(e.nativeEvent.layout.width) + 1),
       h: Math.ceil(e.nativeEvent.layout.height),
     };
     if (opened.current && !closing.current) {
@@ -133,9 +133,21 @@ export function Island({
 
   // Opening, once the first size is known.
   useEffect(() => {
-    if (!measured || opened.current) return;
+    if (!measured || opened.current || closing.current) return;
     opened.current = true;
     const size = measured;
+    if (resume) {
+      // carried over from a layer that closed: already open, so no opening at all
+      if (entry.closing) {
+        onGone(m.id);
+        return;
+      }
+      w.value = size.w;
+      h.value = size.h;
+      shell.value = 1;
+      body.value = 1;
+      return;
+    }
     let shownAt = 120;
     if (reduced) {
       w.value = size.w;
@@ -193,6 +205,7 @@ export function Island({
   const close = useCallback(() => {
     if (closing.current) return;
     closing.current = true;
+    store.beginClose(m.id);
     if (reduced) {
       body.value = withTiming(0, { duration: 200 });
       shell.value = withTiming(0, { duration: 200 }, (done) => {
@@ -239,7 +252,11 @@ export function Island({
     theme.pillWidth,
     theme.pillHeight,
     finish,
+    m.id,
   ]);
+  // the gesture handler is made once and reads the latest values through refs
+  const latest = useRef({ close, top, swipe: config.swipeToDismiss });
+  latest.current = { close, top, swipe: config.swipeToDismiss };
 
   useEffect(() => {
     if (!Number.isFinite(entry.until)) return;
@@ -259,19 +276,21 @@ export function Island({
     () =>
       PanResponder.create({
         onMoveShouldSetPanResponder: (_, g) =>
-          config.swipeToDismiss &&
+          latest.current.swipe &&
           Math.abs(g.dy) > 6 &&
           Math.abs(g.dy) > Math.abs(g.dx),
         onPanResponderMove: (_, g) => {
-          const out = top ? g.dy < 0 : g.dy > 0;
+          const atTop = latest.current.top;
+          const out = atTop ? g.dy < 0 : g.dy > 0;
           drag.value = out ? g.dy : g.dy * 0.2;
         },
         onPanResponderRelease: (_, g) => {
-          const dist = top ? -g.dy : g.dy;
-          const speed = top ? -g.vy : g.vy;
+          const atTop = latest.current.top;
+          const dist = atTop ? -g.dy : g.dy;
+          const speed = atTop ? -g.vy : g.vy;
           if (dist > SWIPE_DISTANCE || speed > 0.5) {
-            drag.value = withTiming(top ? -40 : 40, { duration: 200 });
-            close();
+            drag.value = withTiming(atTop ? -40 : 40, { duration: 200 });
+            latest.current.close();
           } else {
             drag.value = withSpring(0, { damping: 18, stiffness: 260 });
           }
@@ -280,7 +299,7 @@ export function Island({
           drag.value = withSpring(0);
         },
       }),
-    [config.swipeToDismiss, top, drag, close]
+    [drag]
   );
 
   const heroRadius = theme.heroRadius;
@@ -308,12 +327,13 @@ export function Island({
 
   const content = (msg: IslandMessage, interactive: boolean) => {
     const props: SlotProps = { message: msg, theme, dismiss: close };
-    const whole = slot('renderContent', msg);
-    if (whole) return whole(props);
-    const iconSlot = slot('renderIcon', msg);
-    const titleSlot = slot('renderTitle', msg);
-    const bodySlot = slot('renderBody', msg);
-    const actionSlot = slot('renderAction', msg);
+    // slots render as components, so they may use hooks
+    const Whole = slot('renderContent', msg);
+    if (Whole) return <Whole {...props} />;
+    const IconSlot = slot('renderIcon', msg);
+    const TitleSlot = slot('renderTitle', msg);
+    const BodySlot = slot('renderBody', msg);
+    const ActionSlot = slot('renderAction', msg);
     const font = (text: string | undefined, role: 'title' | 'body') => {
       const fontFamily = fontFor(text, theme, role);
       if (!fontFamily) return null;
@@ -330,8 +350,8 @@ export function Island({
     return (
       <View style={[styles.row, flip && styles.rowReverse]}>
         <View style={[styles.message, flip && styles.rowReverse]}>
-          {iconSlot ? (
-            iconSlot(props)
+          {IconSlot ? (
+            <IconSlot {...props} />
           ) : (
             <View
               style={[styles.iconDisc, { backgroundColor: theme.iconDisc }]}
@@ -344,8 +364,8 @@ export function Island({
             </View>
           )}
           <View style={styles.texts}>
-            {titleSlot ? (
-              titleSlot(props)
+            {TitleSlot ? (
+              <TitleSlot {...props} />
             ) : (
               <Text
                 numberOfLines={1}
@@ -359,62 +379,64 @@ export function Island({
                 {msg.title}
               </Text>
             )}
-            {bodySlot
-              ? bodySlot(props)
-              : !!msg.body && (
-                  <Text
-                    numberOfLines={1}
-                    style={[
-                      styles.body,
-                      { color: theme.body },
-                      font(msg.body, 'body'),
-                      theme.bodyStyle,
-                    ]}
-                  >
-                    {msg.body}
-                  </Text>
-                )}
+            {BodySlot ? (
+              <BodySlot {...props} />
+            ) : (
+              !!msg.body && (
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    styles.body,
+                    { color: theme.body },
+                    font(msg.body, 'body'),
+                    theme.bodyStyle,
+                  ]}
+                >
+                  {msg.body}
+                </Text>
+              )
+            )}
           </View>
         </View>
-        {actionSlot
-          ? actionSlot(props)
-          : !!a && (
-              <Pressable
-                onPress={
-                  interactive
-                    ? () => {
-                        a.onPress();
-                        close();
-                      }
-                    : undefined
-                }
-                hitSlop={8}
-                style={
-                  a.icon
-                    ? styles.actionIcon
-                    : [
-                        styles.action,
-                        { backgroundColor: theme.actionBackground },
-                      ]
-                }
-                accessibilityRole="button"
-                accessibilityLabel={a.label}
-              >
-                {a.icon ? (
-                  renderIcon(a.icon, 24, theme.accent)
-                ) : (
-                  <Text
-                    style={[
-                      styles.actionText,
-                      { color: theme.actionText },
-                      font(a.label, 'title'),
-                    ]}
-                  >
-                    {a.label}
-                  </Text>
-                )}
-              </Pressable>
-            )}
+        {ActionSlot ? (
+          <ActionSlot {...props} />
+        ) : (
+          !!a && (
+            <Pressable
+              onPress={
+                interactive
+                  ? () => {
+                      a.onPress();
+                      close();
+                    }
+                  : undefined
+              }
+              hitSlop={8}
+              style={
+                a.icon
+                  ? styles.actionIcon
+                  : [styles.action, { backgroundColor: theme.actionBackground }]
+              }
+              accessibilityRole="button"
+              accessibilityLabel={a.label}
+            >
+              {a.icon ? (
+                renderIcon(a.icon, 24, theme.accent)
+              ) : (
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    styles.actionText,
+                    { color: theme.actionText },
+                    font(a.label, 'title'),
+                  ]}
+                >
+                  {a.label}
+                </Text>
+              )}
+            </Pressable>
+          )
+        )}
       </View>
     );
   };
@@ -431,11 +453,32 @@ export function Island({
       <View {...pan.panHandlers}>
         <Pressable
           onPress={config.tapToDismiss ? close : undefined}
-          accessibilityRole="alert"
+          accessibilityRole="button"
           accessibilityLabel={
             m.accessibilityLabel ?? [m.title, m.body].filter(Boolean).join('. ')
           }
-          accessibilityHint={config.tapToDismiss ? 'Dismiss' : undefined}
+          accessibilityHint={
+            config.tapToDismiss
+              ? (config.accessibilityHint ?? 'Dismiss')
+              : undefined
+          }
+          // the action stays reachable for screen readers as an action of the island
+          accessibilityActions={
+            shown.action
+              ? [
+                  { name: 'activate' },
+                  { name: 'magicTap' },
+                  { name: 'action', label: shown.action.label },
+                ]
+              : undefined
+          }
+          onAccessibilityAction={(e) => {
+            const name = e.nativeEvent.actionName;
+            if ((name === 'action' || name === 'magicTap') && shown.action) {
+              shown.action.onPress();
+              close();
+            } else if (name === 'activate' && config.tapToDismiss) close();
+          }}
         >
           <Animated.View
             style={[
