@@ -12,6 +12,12 @@ export const SCREEN = { width: 393, height: 852 };
 const BEZEL = 12;
 /** Top of the resting island; the toast host is offset to open right on it. */
 export const ISLAND_TOP = 11;
+/** ?zoom=2 draws the phone twice as large (sharper screen recordings). */
+const ZOOM = Number(
+  new URLSearchParams(
+    (globalThis as { location?: { search: string } }).location?.search
+  ).get('zoom') ?? 1
+);
 
 /** Web preview only: an iPhone-sized screen, scaled to fit the window. */
 export function Phone({ children }: { children: ReactNode }) {
@@ -19,9 +25,9 @@ export function Phone({ children }: { children: ReactNode }) {
   const outerW = SCREEN.width + BEZEL * 2;
   const outerH = SCREEN.height + BEZEL * 2;
   const scale = Math.min(
-    1,
-    (win.height - 32) / outerH,
-    (win.width - 32) / outerW
+    ZOOM,
+    (win.height - 32 * ZOOM) / outerH,
+    (win.width - 32 * ZOOM) / outerW
   );
   return (
     <View style={s.desk}>
@@ -35,7 +41,7 @@ export function Phone({ children }: { children: ReactNode }) {
         <View style={s.screen}>
           {children}
           <RestingIsland />
-          <View pointerEvents="none" style={s.homeBar} />
+          <View style={s.homeBar} />
         </View>
       </View>
     </View>
@@ -52,9 +58,7 @@ function RestingIsland() {
       : withTiming(1, { duration: 220 });
   }, [live, opacity]);
   const style = useAnimatedStyle(() => ({ opacity: opacity.value }));
-  return (
-    <Animated.View pointerEvents="none" style={[s.restingIsland, style]} />
-  );
+  return <Animated.View style={[s.restingIsland, style]} />;
 }
 
 export function StatusBar() {
@@ -100,6 +104,7 @@ const s = StyleSheet.create({
     backgroundColor: '#F2F2F7',
   },
   restingIsland: {
+    pointerEvents: 'none',
     position: 'absolute',
     top: ISLAND_TOP,
     alignSelf: 'center',
@@ -109,6 +114,7 @@ const s = StyleSheet.create({
     backgroundColor: '#000000',
   },
   homeBar: {
+    pointerEvents: 'none',
     position: 'absolute',
     bottom: 8,
     alignSelf: 'center',

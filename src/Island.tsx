@@ -410,10 +410,7 @@ export function Island({
   return (
     <>
       {measuring && (
-        <View
-          pointerEvents="none"
-          style={[styles.measure, { width: maxWidth }]}
-        >
+        <View style={[styles.measure, { width: maxWidth }]}>
           <View style={[styles.natural, { maxWidth }]} onLayout={onMeasure}>
             {content(m, false)}
           </View>
@@ -436,10 +433,7 @@ export function Island({
               shellStyle,
             ]}
           >
-            <Animated.View
-              pointerEvents="none"
-              style={[styles.hero, heroStyle]}
-            >
+            <Animated.View style={[styles.hero, heroStyle]}>
               {renderIcon(
                 m.heroIcon ??
                   m.icon ??
@@ -464,7 +458,13 @@ export function Island({
 }
 
 const styles = StyleSheet.create({
-  measure: { position: 'absolute', top: 0, opacity: 0, alignSelf: 'center' },
+  measure: {
+    pointerEvents: 'none',
+    position: 'absolute',
+    top: 0,
+    opacity: 0,
+    alignSelf: 'center',
+  },
   natural: { alignSelf: 'flex-start' },
   island: {
     overflow: 'hidden',
@@ -474,6 +474,7 @@ const styles = StyleSheet.create({
     userSelect: 'none',
   },
   hero: {
+    pointerEvents: 'none',
     position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',

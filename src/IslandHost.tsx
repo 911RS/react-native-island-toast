@@ -48,7 +48,6 @@ export function IslandHost() {
   // Rendered even when idle, so its width is known before a message measures itself.
   return (
     <View
-      pointerEvents="box-none"
       style={[styles.host, place]}
       onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
     >
@@ -80,6 +79,7 @@ export function IslandHost() {
 
 const styles = StyleSheet.create({
   host: {
+    pointerEvents: 'box-none',
     position: 'absolute',
     left: 0,
     right: 0,

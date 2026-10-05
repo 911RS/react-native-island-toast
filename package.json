@@ -13,12 +13,10 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "src",
-    "lib",
-    "!**/__tests__",
-    "!**/__fixtures__",
-    "!**/__mocks__",
-    "!**/.*"
+    "lib/module/**/*.js",
+    "lib/module/package.json",
+    "lib/typescript/**/*.d.ts",
+    "lib/typescript/package.json"
   ],
   "scripts": {
     "example": "yarn workspace react-native-island-toast-example",
@@ -79,7 +77,7 @@
   },
   "peerDependencies": {
     "react": "*",
-    "react-native": "*",
+    "react-native": ">=0.71.0",
     "react-native-reanimated": ">=3.0.0",
     "react-native-safe-area-context": ">=4.0.0"
   },
@@ -94,7 +92,8 @@
       [
         "module",
         {
-          "esm": true
+          "esm": true,
+          "sourceMaps": false
         }
       ],
       [
@@ -130,5 +129,6 @@
       "<rootDir>/example/node_modules",
       "<rootDir>/lib/"
     ]
-  }
+  },
+  "sideEffects": false
 }
