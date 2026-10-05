@@ -19,6 +19,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { fontFor } from './config';
 import { defaultIconFor } from './DefaultIcons';
 import { renderIcon } from './renderIcon';
 import { store, type LiveEntry } from './store';
@@ -313,7 +314,18 @@ export function Island({
     const titleSlot = slot('renderTitle', msg);
     const bodySlot = slot('renderBody', msg);
     const actionSlot = slot('renderAction', msg);
-    const font = theme.fontFamily ? { fontFamily: theme.fontFamily } : null;
+    const font = (text: string | undefined, role: 'title' | 'body') => {
+      const fontFamily = fontFor(text, theme, role);
+      if (!fontFamily) return null;
+      // a dedicated bold file must not be bolded again (Android would fall back to another font)
+      const ownTitleFile =
+        role === 'title' &&
+        (fontFamily === theme.titleFontFamily ||
+          fontFamily === theme.arabicTitleFontFamily);
+      return ownTitleFile
+        ? { fontFamily, fontWeight: 'normal' as const }
+        : { fontFamily };
+    };
     const a = msg.action;
     return (
       <View style={[styles.row, flip && styles.rowReverse]}>
@@ -340,7 +352,7 @@ export function Island({
                 style={[
                   styles.title,
                   { color: theme.title },
-                  font,
+                  font(msg.title, 'title'),
                   theme.titleStyle,
                 ]}
               >
@@ -355,7 +367,7 @@ export function Island({
                     style={[
                       styles.body,
                       { color: theme.body },
-                      font,
+                      font(msg.body, 'body'),
                       theme.bodyStyle,
                     ]}
                   >
@@ -395,7 +407,7 @@ export function Island({
                     style={[
                       styles.actionText,
                       { color: theme.actionText },
-                      font,
+                      font(a.label, 'title'),
                     ]}
                   >
                     {a.label}

@@ -14,6 +14,7 @@ Toasts that open like the Dynamic Island: a big icon pops in a black square, the
 - Stays above modals and sheets
 - Promise toasts, live updates, undo actions
 - Light and dark themes, custom types, slots for every part
+- Your own fonts, with a separate one for Arabic
 - RTL, screen readers and reduced motion
 
 ## Install
@@ -156,7 +157,8 @@ Settings are applied in this order, each one over the previous:
 | `maxWidth`, `maxWidthRatio` | `560`, `0.95` of the host's width |
 | `radius`, `heroRadius` | `22`, `36` |
 | `shadow` | a soft drop shadow |
-| `fontFamily`, `titleStyle`, `bodyStyle` | none |
+| `fontFamily`, `titleFontFamily`, `arabicFontFamily`, `arabicTitleFontFamily` | system font, see [Fonts](#fonts) |
+| `titleStyle`, `bodyStyle` | none |
 | `icon`, `heroIcon` | built-in tick, warning sign, info sign, spinner |
 
 ### Motion
@@ -170,6 +172,25 @@ Settings are applied in this order, each one over the previous:
 | `reducedMotion` | `'system'` (fade only when the phone asks for less motion), `'always'` or `'never'` |
 
 Presets: `snappy`, `calm`, `bouncy`, `minimal` (no big icon).
+
+## Fonts
+
+Use your own fonts, with a separate one for Arabic. Each line (title, body, action) picks its font on its own: a line with Arabic letters uses the Arabic font, any other line uses the Latin one.
+
+```tsx
+<IslandProvider
+  config={{
+    theme: {
+      fontFamily: 'Inter-Regular',
+      titleFontFamily: 'Inter-Bold',
+      arabicFontFamily: 'Cairo-Regular',
+      arabicTitleFontFamily: 'Cairo-Bold',
+    },
+  }}
+>
+```
+
+Load the fonts the usual way (`expo-font`, or bundled files). Each key falls back to the one before it: the Arabic title to the Arabic font, then to the Latin font, then to the system font. A title font is drawn without extra bold, since it is already the bold file.
 
 ## Slots
 
@@ -207,11 +228,13 @@ island.success('Table booked', {
 A React Native `Modal` opens in its own layer. Mount an `IslandHost` inside it as well:
 
 ```tsx
-<Modal visible={open}>
+<Modal visible={open} statusBarTranslucent>
   <Checkout />
   <IslandHost />
 </Modal>
 ```
+
+On Android, give the `Modal` `statusBarTranslucent` so it covers the status bar like the screen under it; without it the island sits one status bar lower inside the modal.
 
 Only the newest mounted host draws the island, so it always stays on top. When the modal closes, a message that is showing carries on in the host below without opening again.
 

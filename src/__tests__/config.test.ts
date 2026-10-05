@@ -1,6 +1,7 @@
 import {
   DEFAULT_CONFIG,
   deepMerge,
+  fontFor,
   lifeMs,
   resolveMotion,
   resolveTheme,
@@ -106,5 +107,44 @@ describe('lifeMs', () => {
   it('lets duration replace the reading time', () => {
     expect(lifeMs(msg({ duration: 5000 }), motion)).toBe(6300);
     expect(lifeMs(msg({ duration: Infinity }), motion)).toBe(Infinity);
+  });
+});
+
+describe('fontFor', () => {
+  const theme = {
+    ...resolveTheme(DEFAULT_CONFIG, 'info', false),
+    fontFamily: 'Inter',
+    titleFontFamily: 'Inter-Bold',
+    arabicFontFamily: 'Cairo',
+    arabicTitleFontFamily: 'Cairo-Bold',
+  };
+  it('uses the Latin fonts for Latin text', () => {
+    expect(fontFor('Order shipped', theme, 'title')).toBe('Inter-Bold');
+    expect(fontFor('Arrives Friday', theme, 'body')).toBe('Inter');
+  });
+  it('uses the Arabic fonts when the text has Arabic letters', () => {
+    expect(fontFor('تم الحفظ', theme, 'title')).toBe('Cairo-Bold');
+    expect(fontFor('تم حفظ التغييرات', theme, 'body')).toBe('Cairo');
+    expect(fontFor('Order رقم 12', theme, 'body')).toBe('Cairo');
+  });
+  it('falls back from the title font to the plain font of the same script', () => {
+    const t = {
+      ...theme,
+      titleFontFamily: undefined,
+      arabicTitleFontFamily: undefined,
+    };
+    expect(fontFor('Saved', t, 'title')).toBe('Inter');
+    expect(fontFor('تم', t, 'title')).toBe('Cairo');
+  });
+  it('falls back from Arabic to the Latin font, then to the system font', () => {
+    const t = {
+      ...theme,
+      arabicFontFamily: undefined,
+      arabicTitleFontFamily: undefined,
+    };
+    expect(fontFor('تم', t, 'body')).toBe('Inter');
+    expect(
+      fontFor('Saved', resolveTheme(DEFAULT_CONFIG, 'info', false), 'title')
+    ).toBeUndefined();
   });
 });

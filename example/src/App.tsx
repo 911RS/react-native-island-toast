@@ -8,6 +8,12 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { Cairo_400Regular, Cairo_700Bold } from '@expo-google-fonts/cairo';
+import {
+  SpaceGrotesk_400Regular,
+  SpaceGrotesk_700Bold,
+} from '@expo-google-fonts/space-grotesk';
+import { useFonts } from 'expo-font';
 import { island, IslandHost, IslandProvider } from 'react-native-island-toast';
 import { playDemo } from './demo';
 import { ISLAND_TOP, Phone, StatusBar } from './Phone';
@@ -47,6 +53,12 @@ const demoName = web
   : null;
 
 export default function App() {
+  useFonts({
+    Cairo_400Regular,
+    Cairo_700Bold,
+    SpaceGrotesk_400Regular,
+    SpaceGrotesk_700Bold,
+  });
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [tab, setTab] = useState<Tab>('Types');
   const [hostOn, setHostOn] = useState(true);

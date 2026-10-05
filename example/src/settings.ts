@@ -17,6 +17,7 @@ export interface Settings {
   radius: number;
   heroSize: number;
   look: Look;
+  fonts: 'system' | 'custom';
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -27,9 +28,17 @@ export const DEFAULT_SETTINGS: Settings = {
   radius: 22,
   heroSize: 116,
   look: 'dark',
+  fonts: 'system',
 };
 
 export type SetSettings = (patch: Partial<Settings>) => void;
+
+const CUSTOM_FONTS = {
+  fontFamily: 'SpaceGrotesk_400Regular',
+  titleFontFamily: 'SpaceGrotesk_700Bold',
+  arabicFontFamily: 'Cairo_400Regular',
+  arabicTitleFontFamily: 'Cairo_700Bold',
+};
 
 const LIGHT = {
   background: '#FFFFFF',
@@ -50,6 +59,7 @@ export function toConfig(s: Settings): Partial<IslandConfig> {
     colorScheme: 'light',
     theme: {
       ...(s.look === 'light' ? LIGHT : {}),
+      ...(s.fonts === 'custom' ? CUSTOM_FONTS : {}),
       ...(s.accent ? { accent: s.accent } : {}),
       radius: s.radius,
       heroSize: s.heroSize,

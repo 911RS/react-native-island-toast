@@ -29,6 +29,15 @@ export function Theme({
         onChange={(look) => set({ look })}
       />
       <Choice
+        label="Font"
+        options={[
+          { label: 'System', value: 'system' as const },
+          { label: 'Space Grotesk + Cairo', value: 'custom' as const },
+        ]}
+        value={settings.fonts}
+        onChange={(fonts) => set({ fonts })}
+      />
+      <Choice
         label="Accent"
         options={ACCENTS}
         value={settings.accent ?? ''}
@@ -55,6 +64,13 @@ export function Theme({
       <Row
         label="Try an error"
         onPress={() => island.error('Upload failed', { body: 'No connection' })}
+      />
+      <Row
+        label="Try Arabic and Latin together"
+        hint="Each line picks the font for its script"
+        onPress={() =>
+          island.success('تم حفظ الملف', { body: 'report-2026.pdf · 2 MB' })
+        }
       />
     </Section>
   );

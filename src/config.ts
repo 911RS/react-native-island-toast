@@ -139,3 +139,22 @@ export function lifeMs(m: IslandMessage, motion: IslandMotion): number {
     m.duration ?? (m.action ? motion.readWithActionMs : motion.readMs);
   return read + (motion.hero ? motion.heroHoldMs : 0) + 400;
 }
+
+const ARABIC =
+  /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+
+/** The font family for one line of text: Arabic fonts when it has Arabic letters, else the Latin ones. */
+export function fontFor(
+  text: string | undefined,
+  theme: IslandTheme,
+  role: 'title' | 'body'
+): string | undefined {
+  const latin =
+    (role === 'title' ? theme.titleFontFamily : undefined) ?? theme.fontFamily;
+  if (!text || !ARABIC.test(text)) return latin;
+  return (
+    (role === 'title' ? theme.arabicTitleFontFamily : undefined) ??
+    theme.arabicFontFamily ??
+    latin
+  );
+}

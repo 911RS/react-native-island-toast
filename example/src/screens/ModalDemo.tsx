@@ -37,6 +37,7 @@ function Layer({
       <Modal
         visible={visible}
         transparent
+        statusBarTranslucent
         animationType="slide"
         onRequestClose={onClose}
       >

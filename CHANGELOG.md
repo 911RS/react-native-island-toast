@@ -11,4 +11,5 @@ First release.
 - Slots: `renderIcon`, `renderTitle`, `renderBody`, `renderAction`, `renderContent`
 - Queue modes: `replace-latest`, `queue-all`, `replace-now`
 - Top or bottom, tap and swipe to dismiss, RTL, screen reader announcements
+- Custom fonts per script: `fontFamily`, `titleFontFamily`, `arabicFontFamily`, `arabicTitleFontFamily`
 - Hosts inside modals and sheets keep the island on top

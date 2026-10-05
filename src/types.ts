@@ -38,7 +38,14 @@ export interface IslandTheme {
   radius: number;
   heroRadius: number;
   shadow: ViewStyle;
+  /** Font for all text (Latin and other scripts). */
   fontFamily?: string;
+  /** Font for the title, e.g. the bold file of a custom font. Falls back to fontFamily. */
+  titleFontFamily?: string;
+  /** Font for text that contains Arabic letters. Falls back to fontFamily. */
+  arabicFontFamily?: string;
+  /** Title font for text that contains Arabic letters. Falls back to arabicFontFamily. */
+  arabicTitleFontFamily?: string;
   titleStyle?: TextStyle;
   bodyStyle?: TextStyle;
   icon?: IconSpec;

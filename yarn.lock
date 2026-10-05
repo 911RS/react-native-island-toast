@@ -1699,6 +1699,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@expo-google-fonts/cairo@npm:^0.4.2":
+  version: 0.4.2
+  resolution: "@expo-google-fonts/cairo@npm:0.4.2"
+  checksum: 10c0/fffb6088d0c08d2cfacaca3a27b2789693d02b3169b6983079ee6a62011f87e8fef1c7390105b08eaa6f5e87b712c060796179a769a29cba027c7b8e54faec41
+  languageName: node
+  linkType: hard
+
+"@expo-google-fonts/space-grotesk@npm:^0.4.1":
+  version: 0.4.1
+  resolution: "@expo-google-fonts/space-grotesk@npm:0.4.1"
+  checksum: 10c0/cc9d92782d296f751586eb829ebbe38c28447ec649292fad00010c74e6b10a672da874f261764e0c8f76f2d661c5bf85fe73ef090547ae7e1614f7dd9df4faa4
+  languageName: node
+  linkType: hard
+
 "@expo/cli@npm:^57.0.27":
   version: 57.0.27
   resolution: "@expo/cli@npm:57.0.27"
@@ -9197,8 +9211,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "react-native-island-toast-example@workspace:example"
   dependencies:
+    "@expo-google-fonts/cairo": "npm:^0.4.2"
+    "@expo-google-fonts/space-grotesk": "npm:^0.4.1"
     "@expo/metro-runtime": "npm:~57.0.16"
     expo: "npm:~57.0.26"
+    expo-font: "npm:~57.0.4"
     expo-status-bar: "npm:~57.0.1"
     react: "npm:19.2.3"
     react-dom: "npm:19.2.3"
@@ -9241,7 +9258,9 @@ __metadata:
     typescript: "npm:^6.0.3"
   peerDependencies:
     react: "*"
-    react-native: "*"
+    react-native: ">=0.71.0"
+    react-native-reanimated: ">=3.0.0"
+    react-native-safe-area-context: ">=4.0.0"
   languageName: unknown
   linkType: soft
 
