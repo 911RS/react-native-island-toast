@@ -1,54 +1,89 @@
-import { useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import type { ReactNode } from 'react';
+import {
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { island, IslandHost } from 'react-native-island-toast';
 import { C, Row, Section } from '../ui';
 
-export function ModalDemo() {
-  const [open, setOpen] = useState(false);
+export function ModalDemo({ open }: { open: () => void }) {
   return (
-    <>
-      <Section title="Above modals">
-        <Row
-          label="Open a modal"
-          hint="It mounts its own IslandHost, so the island stays on top"
-          onPress={() => setOpen(true)}
-        />
-      </Section>
+    <Section title="Above modals">
+      <Row
+        label="Open a modal"
+        hint="It mounts its own IslandHost, so the island stays on top"
+        onPress={open}
+      />
+    </Section>
+  );
+}
+
+/** On the web preview a Modal would cover the whole browser window: draw it inside the phone instead. */
+function Layer({
+  visible,
+  onClose,
+  children,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  if (Platform.OS !== 'web') {
+    return (
       <Modal
-        visible={open}
+        visible={visible}
         transparent
         animationType="slide"
-        onRequestClose={() => setOpen(false)}
+        onRequestClose={onClose}
       >
-        <View style={s.backdrop}>
-          <View style={s.sheet}>
-            <Text style={s.title}>Checkout</Text>
-            <Row
-              label="Show a message here"
-              onPress={() =>
-                island.success('Coupon applied', { body: '−10 %' })
-              }
-            />
-            <Row
-              label="Show, then close the modal"
-              hint="The message carries on below, without opening again"
-              onPress={() => {
-                island.info('Saved as draft', { body: 'You can finish later' });
-                setTimeout(() => setOpen(false), 1600);
-              }}
-            />
-            <Pressable
-              onPress={() => setOpen(false)}
-              style={s.close}
-              accessibilityRole="button"
-            >
-              <Text style={s.closeText}>Close</Text>
-            </Pressable>
-          </View>
-          <IslandHost />
-        </View>
+        {children}
       </Modal>
-    </>
+    );
+  }
+  return visible ? (
+    <View style={StyleSheet.absoluteFill}>{children}</View>
+  ) : null;
+}
+
+export function CheckoutSheet({
+  visible,
+  onClose,
+}: {
+  visible: boolean;
+  onClose: () => void;
+}) {
+  return (
+    <Layer visible={visible} onClose={onClose}>
+      <View style={s.backdrop}>
+        <View style={s.sheet}>
+          <Text style={s.title}>Checkout</Text>
+          <Row
+            label="Show a message here"
+            onPress={() => island.success('Coupon applied', { body: '−10 %' })}
+          />
+          <Row
+            label="Show, then close the modal"
+            hint="The message carries on below, without opening again"
+            onPress={() => {
+              island.info('Saved as draft', { body: 'You can finish later' });
+              setTimeout(onClose, 1600);
+            }}
+          />
+          <Pressable
+            onPress={onClose}
+            style={s.close}
+            accessibilityRole="button"
+          >
+            <Text style={s.closeText}>Close</Text>
+          </Pressable>
+        </View>
+        <IslandHost />
+      </View>
+    </Layer>
   );
 }
 
@@ -60,15 +95,15 @@ const s = StyleSheet.create({
   },
   sheet: {
     backgroundColor: C.card,
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
-    paddingBottom: 30,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingBottom: 34,
   },
-  title: { fontSize: 20, fontWeight: '700', color: C.ink, padding: 18 },
+  title: { fontSize: 22, fontWeight: '700', color: C.ink, padding: 20 },
   close: {
     margin: 16,
     padding: 14,
-    borderRadius: 12,
+    borderRadius: 14,
     backgroundColor: C.ink,
     alignItems: 'center',
   },

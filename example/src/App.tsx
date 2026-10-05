@@ -8,17 +8,17 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { IslandHost, IslandProvider } from 'react-native-island-toast';
+import { island, IslandHost, IslandProvider } from 'react-native-island-toast';
 import { playDemo } from './demo';
+import { ISLAND_TOP, Phone, StatusBar } from './Phone';
 import { Behavior } from './screens/Behavior';
 import { Content } from './screens/Content';
-import { ModalDemo } from './screens/ModalDemo';
+import { CheckoutSheet, ModalDemo } from './screens/ModalDemo';
 import { Presets } from './screens/Presets';
 import { Theme } from './screens/Theme';
 import { Types } from './screens/Types';
 import { DEFAULT_SETTINGS, toConfig, type Settings } from './settings';
 import { C } from './ui';
-import { island } from 'react-native-island-toast';
 
 export type Tab =
   'Types' | 'Presets' | 'Theme' | 'Content' | 'Behavior' | 'Modal';
@@ -30,6 +30,14 @@ const TABS: Tab[] = [
   'Behavior',
   'Modal',
 ];
+const SUBTITLE: Record<Tab, string> = {
+  Types: 'Success, error, info and your own types',
+  Presets: 'Ready-made motion, one line',
+  Theme: 'Colors, corners and sizes',
+  Content: 'Icons, actions, promises and slots',
+  Behavior: 'Queue, position, gestures, RTL',
+  Modal: 'Stays on top of modals and sheets',
+};
 
 const web = Platform.OS === 'web';
 const demoName = web
@@ -42,11 +50,19 @@ export default function App() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [tab, setTab] = useState<Tab>('Types');
   const [hostOn, setHostOn] = useState(true);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const set = useCallback(
     (p: Partial<Settings>) => setSettings((s) => ({ ...s, ...p })),
     []
   );
-  const config = useMemo(() => toConfig(settings), [settings]);
+  // On the web preview there is no real status bar: open the toast on the drawn resting island.
+  const config = useMemo(
+    () => ({
+      ...toConfig(settings),
+      offset: settings.position === 'bottom' ? 64 : web ? ISLAND_TOP - 6 : 0,
+    }),
+    [settings]
+  );
 
   useEffect(
     () => (demoName ? playDemo(demoName, set, setTab) : undefined),
@@ -73,104 +89,70 @@ export default function App() {
     Behavior: (
       <Behavior settings={settings} set={set} remountHost={remountHost} />
     ),
-    Modal: <ModalDemo />,
+    Modal: <ModalDemo open={() => setSheetOpen(true)} />,
   }[tab];
 
   const app = (
     <IslandProvider config={config}>
       <SafeAreaView style={s.page} edges={['top', 'left', 'right']}>
-        {web && <FakeStatusBar />}
-        <Text style={s.h1}>Island Toast</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={s.tabsWrap}
-          contentContainerStyle={s.tabs}
-        >
-          {TABS.map((t) => (
-            <Pressable
-              key={t}
-              onPress={() => setTab(t)}
-              style={[s.tab, t === tab && s.tabOn]}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: t === tab }}
-            >
-              <Text style={[s.tabText, t === tab && s.tabTextOn]}>{t}</Text>
-            </Pressable>
-          ))}
+        {web && <StatusBar />}
+        <ScrollView contentContainerStyle={s.body}>
+          <Text style={s.h1}>{tab}</Text>
+          <Text style={s.sub}>{SUBTITLE[tab]}</Text>
+          {screen}
         </ScrollView>
-        <ScrollView contentContainerStyle={s.body}>{screen}</ScrollView>
+      </SafeAreaView>
+      <SafeAreaView edges={['bottom']} style={s.tabbar}>
+        <View style={s.tabs}>
+          {TABS.map((t) => {
+            const on = t === tab;
+            return (
+              <Pressable
+                key={t}
+                onPress={() => setTab(t)}
+                style={s.tab}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: on }}
+              >
+                <View style={[s.dot, on && s.dotOn]} />
+                <Text style={[s.tabText, on && s.tabTextOn]}>{t}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        {web && <View style={s.homeSpace} />}
       </SafeAreaView>
       {hostOn && <IslandHost />}
+      <CheckoutSheet visible={sheetOpen} onClose={() => setSheetOpen(false)} />
     </IslandProvider>
   );
 
   return (
-    <SafeAreaProvider>
-      {web ? (
-        <View style={s.desk}>
-          <View style={s.phone}>{app}</View>
-        </View>
-      ) : (
-        app
-      )}
-    </SafeAreaProvider>
-  );
-}
-
-/** On the web preview, a status bar so the island sits where it would on a phone. */
-function FakeStatusBar() {
-  return (
-    <View style={s.status}>
-      <Text style={s.statusText}>9:41</Text>
-      <Text style={s.statusText}>100%</Text>
-    </View>
+    <SafeAreaProvider>{web ? <Phone>{app}</Phone> : app}</SafeAreaProvider>
   );
 }
 
 const s = StyleSheet.create({
-  desk: {
-    flex: 1,
-    backgroundColor: '#1C1C1E',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  phone: {
-    width: 393,
-    height: 852,
-    maxHeight: '100%',
-    borderRadius: 54,
-    overflow: 'hidden',
-    backgroundColor: C.page,
-    borderWidth: 10,
-    borderColor: '#000000',
-  },
   page: { flex: 1, backgroundColor: C.page },
-  status: {
-    height: 48,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 30,
-  },
-  statusText: { fontSize: 15, fontWeight: '600', color: C.ink },
+  body: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 40 },
   h1: {
-    fontSize: 32,
+    fontSize: 34,
     fontWeight: '800',
     color: C.ink,
-    paddingHorizontal: 18,
-    paddingTop: 8,
+    letterSpacing: -0.5,
+    marginLeft: 4,
   },
-  tabsWrap: { flexGrow: 0 },
-  tabs: { paddingHorizontal: 14, paddingVertical: 12, gap: 6 },
-  tab: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 18,
-    backgroundColor: '#E5E5EA',
+  sub: { fontSize: 15, color: C.soft, marginTop: 2, marginLeft: 4 },
+  tabbar: {
+    backgroundColor: 'rgba(249,249,251,0.96)',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: C.line,
   },
-  tabOn: { backgroundColor: C.ink },
-  tabText: { fontSize: 14, fontWeight: '600', color: C.ink },
-  tabTextOn: { color: '#FFFFFF' },
-  body: { paddingHorizontal: 16, paddingBottom: 60 },
+  tabs: { flexDirection: 'row', paddingTop: 8, paddingBottom: 6 },
+  tab: { flex: 1, alignItems: 'center', gap: 5, paddingVertical: 2 },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'transparent' },
+  dotOn: { backgroundColor: C.blue },
+  tabText: { fontSize: 11.5, fontWeight: '600', color: '#8E8E93' },
+  tabTextOn: { color: C.ink },
+  homeSpace: { height: 22 },
 });

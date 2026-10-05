@@ -93,6 +93,10 @@ export function Island({
   const drag = useSharedValue(0);
   const closing = useRef(false);
   const opened = useRef(false);
+  /** When the big-icon square starts turning into the message. */
+  const morphAt = useRef(0);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
   const finish = useCallback(() => {
     m.onHide?.();
@@ -107,10 +111,20 @@ export function Island({
     };
     if (opened.current && !closing.current) {
       // content changed on a live island: resize, fade the new content in
-      body.value = 0;
-      w.value = to(size.w, motion.morph);
-      h.value = to(size.h, motion.morph);
-      body.value = withDelay(80, withTiming(1, { duration: 160 }));
+      const resize = () => {
+        if (closing.current) return;
+        w.value = to(size.w, motion.morph);
+        h.value = to(size.h, motion.morph);
+      };
+      const wait = morphAt.current - Date.now();
+      if (wait > 0) {
+        // still on the big icon: let it finish, the content fades in as planned
+        timers.current.push(setTimeout(resize, wait));
+      } else {
+        body.value = 0;
+        resize();
+        body.value = withDelay(80, withTiming(1, { duration: 160 }));
+      }
     }
     setShown(m);
     setMeasured(size);
@@ -138,6 +152,7 @@ export function Island({
       // the pill opens into a square, the big icon pops, holds, then the square becomes the message
       const grow = { duration: 320, easing: Easing.out(Easing.back(1.4)) };
       const turn = motion.heroHoldMs + 380;
+      morphAt.current = Date.now() + turn;
       shell.value = withTiming(1, { duration: 120 });
       w.value = withDelay(
         60,
@@ -164,11 +179,12 @@ export function Island({
       shownAt = turn + 380;
     }
     store.markOpened(m.id);
-    const t = setTimeout(() => {
-      m.onShow?.();
-      config.onShow?.(m);
-    }, shownAt);
-    return () => clearTimeout(t);
+    timers.current.push(
+      setTimeout(() => {
+        m.onShow?.();
+        config.onShow?.(m);
+      }, shownAt)
+    );
     // the opening runs once per island
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [measured]);
@@ -455,6 +471,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: StyleSheet.hairlineWidth,
+    userSelect: 'none',
   },
   hero: {
     position: 'absolute',
